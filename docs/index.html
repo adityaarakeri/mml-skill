@@ -5,128 +5,195 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>mml-skill Runbook — Teach your agent to build multiplayer 3D worlds</title>
 <meta name="description" content="Operational runbook for the mml-skill: install, build, validate, serve, test, and maintain MML documents with a coding agent.">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+  /* Hallmark · macrostructure: Long Document · tone: utilitarian · anchor hue: electric-cobalt */
   :root {
-    --bg: #0b0e14;
-    --bg-soft: #11151f;
-    --card: #161b28;
-    --border: #232a3b;
-    --text: #e6e9f0;
-    --muted: #8b93a7;
-    --green: #06d6a0;
-    --blue: #4361ee;
-    --yellow: #ffd166;
-    --pink: #ff5470;
-    --purple: #a78bfa;
-    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    line-height: 1.65;
-  }
-  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+    /* Cobalt theme tokens */
+    --color-paper: oklch(98.5% 0.004 250);
+    --color-paper-2: oklch(96% 0.006 252);
+    --color-ink: oklch(24% 0.02 258);
+    --color-ink-2: oklch(34% 0.018 257);
+    --color-ink-3: oklch(44% 0.015 256);
+    --color-accent: oklch(58% 0.20 256);
+    --color-accent-ink: oklch(98.5% 0.004 250);
+    --color-accent-hover: oklch(52% 0.18 256);
+    --color-focus: oklch(58% 0.20 256);
+    --color-graphite: oklch(22% 0.016 260);
+    --color-graphite-ink: oklch(92% 0.01 256);
+    --color-rule: oklch(85% 0.006 252);
+    --color-rule-2: oklch(78% 0.008 254);
 
-  /* layout: sidebar + content */
-  .layout { display: grid; grid-template-columns: 240px 1fr; gap: 48px; align-items: start; }
-  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } nav.toc { position: static; display: none; } }
+    --font-display: "Space Grotesk", system-ui, sans-serif;
+    --font-body: "Inter", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+    --space-7: 48px;
+    --space-8: 64px;
+    --space-9: 96px;
+
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+    --text-2xl: 1.5rem;
+    --text-3xl: 2rem;
+    --text-4xl: 2.5rem;
+    --text-display: 3.5rem;
+    --text-display-s: 2.75rem;
+
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+    --ease-in-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --dur-fast: 150ms;
+    --dur-base: 300ms;
+    --dur-slow: 600ms;
+
+    --radius-tight: 6px;
+    --radius-code: 10px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --dur-fast: 1ms;
+      --dur-base: 1ms;
+      --dur-slow: 1ms;
+    }
+    .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { overflow-x: clip; scroll-behavior: smooth; }
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink-2);
+    font-family: var(--font-body);
+    font-weight: 400;
+    line-height: 1.7;
+    font-size: var(--text-base);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  a { color: var(--color-accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+  a:hover { color: var(--color-accent-hover); border-bottom-color: var(--color-accent-hover); }
+  a:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; border-radius: 2px; border-bottom-color: transparent; }
+
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 var(--space-5); }
 
   header.hero {
-    padding: 72px 0 48px;
-    border-bottom: 1px solid var(--border);
-    background:
-      radial-gradient(ellipse 60% 50% at 20% 0%, rgba(67, 97, 238, 0.18), transparent),
-      radial-gradient(ellipse 50% 40% at 85% 10%, rgba(6, 214, 160, 0.10), transparent);
+    padding: var(--space-9) 0 var(--space-7);
+    border-bottom: 1px solid var(--color-rule);
   }
   .eyebrow {
-    display: inline-block; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
-    color: var(--green); border: 1px solid rgba(6,214,160,.35); border-radius: 999px;
-    padding: 4px 12px; margin-bottom: 20px;
+    display: inline-block; font-family: var(--font-mono); font-size: var(--text-xs); font-weight: 500;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent);
+    border: 1px solid var(--color-accent); border-radius: 999px; padding: var(--space-1) var(--space-3);
+    margin-bottom: var(--space-4);
   }
-  h1 { font-size: 42px; line-height: 1.15; letter-spacing: -0.02em; }
-  h1 .accent { color: var(--purple); }
-  .sub { color: var(--muted); font-size: 18px; margin-top: 14px; max-width: 620px; }
-  .hero-links { margin-top: 26px; display: flex; gap: 12px; flex-wrap: wrap; }
+  h1 { font-family: var(--font-display); font-size: var(--text-display); font-weight: 600; line-height: 1.1; letter-spacing: -0.02em; color: var(--color-ink); }
+  h1 .accent { color: var(--color-accent); }
+  .sub { color: var(--color-ink-3); font-size: var(--text-lg); margin-top: var(--space-4); max-width: 640px; }
+  .hero-links { margin-top: var(--space-5); display: flex; gap: var(--space-3); flex-wrap: wrap; }
   .btn {
-    display: inline-block; padding: 10px 18px; border-radius: 8px; font-size: 14px; font-weight: 600;
-    text-decoration: none; transition: transform .12s ease, opacity .12s ease;
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+    padding: var(--space-2) var(--space-4); border-radius: var(--radius-tight);
+    font-family: var(--font-display); font-size: var(--text-sm); font-weight: 500;
+    text-decoration: none; transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
   }
-  .btn:hover { transform: translateY(-1px); opacity: .92; }
-  .btn-primary { background: var(--green); color: #06281f; }
-  .btn-ghost { border: 1px solid var(--border); color: var(--text); }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary { background: var(--color-accent); color: var(--color-accent-ink); border: none; }
+  .btn-primary:hover { background: var(--color-accent-hover); }
+  .btn-ghost { background: transparent; color: var(--color-ink-2); border: 1px solid var(--color-rule); }
+  .btn-ghost:hover { background: var(--color-paper-2); border-color: var(--color-ink-3); }
+
+  .layout { display: grid; grid-template-columns: 220px 1fr; gap: var(--space-8); align-items: start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } nav.toc { display: none; } }
 
   nav.toc {
-    position: sticky; top: 32px; font-size: 14px;
-    border-left: 1px solid var(--border); padding-left: 18px;
+    position: sticky; top: var(--space-6); font-family: var(--font-mono); font-size: var(--text-sm);
+    border-left: 1px solid var(--color-rule); padding-left: var(--space-4);
   }
-  nav.toc .toc-title { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
-  nav.toc a { display: block; color: var(--muted); text-decoration: none; padding: 4px 0; }
-  nav.toc a:hover { color: var(--text); }
-  nav.toc a.step::before { content: attr(data-n) "  "; color: var(--green); font-family: var(--mono); font-size: 12px; }
+  nav.toc .toc-title { font-family: var(--font-display); font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-ink-3); margin-bottom: var(--space-3); }
+  nav.toc a { display: block; color: var(--color-ink-3); text-decoration: none; padding: var(--space-1) 0; border-bottom: none; line-height: 1.5; }
+  nav.toc a:hover { color: var(--color-ink); border-bottom: none; }
+  nav.toc a .num { color: var(--color-accent); margin-right: var(--space-2); }
 
-  main { padding: 56px 0 96px; }
-  section { margin-bottom: 64px; scroll-margin-top: 24px; }
+  main { padding: var(--space-7) 0 var(--space-9); }
+  section { margin-bottom: var(--space-8); scroll-margin-top: var(--space-6); }
+  .reveal { opacity: 0; transform: translateY(12px); transition: opacity var(--dur-slow) var(--ease-out), transform var(--dur-slow) var(--ease-out); }
+  .reveal.is-in { opacity: 1; transform: none; }
+
   h2 {
-    font-size: 26px; letter-spacing: -0.01em; margin-bottom: 8px;
-    display: flex; align-items: baseline; gap: 12px;
+    font-family: var(--font-display); font-size: var(--text-2xl); font-weight: 600; line-height: 1.2;
+    letter-spacing: -0.01em; color: var(--color-ink); margin-bottom: var(--space-3);
+    display: flex; align-items: baseline; gap: var(--space-3);
   }
-  h2 .n {
-    font-family: var(--mono); font-size: 15px; color: var(--green);
-    border: 1px solid rgba(6,214,160,.35); border-radius: 6px; padding: 1px 8px;
-  }
-  .lede { color: var(--muted); margin-bottom: 20px; max-width: 720px; }
-  h3 { font-size: 17px; margin: 26px 0 10px; color: var(--yellow); }
-  p { margin-bottom: 12px; max-width: 760px; }
-  a { color: var(--purple); }
-  strong { color: var(--text); }
-  ul, ol { margin: 0 0 14px 22px; max-width: 740px; }
-  li { margin-bottom: 6px; }
+  h2 .num { font-family: var(--font-mono); font-size: var(--text-sm); font-weight: 500; color: var(--color-accent);
+    border: 1px solid var(--color-accent); border-radius: var(--radius-tight); padding: 0 var(--space-2); }
+  .lede { color: var(--color-ink-3); margin-bottom: var(--space-4); max-width: 720px; font-size: var(--text-lg); }
+  h3 { font-family: var(--font-display); font-size: var(--text-lg); font-weight: 500; color: var(--color-ink); margin: var(--space-6) 0 var(--space-3); }
+  p { margin-bottom: var(--space-3); max-width: 760px; }
+  ul, ol { margin: var(--space-3) 0 var(--space-4) var(--space-5); max-width: 740px; }
+  li { margin-bottom: var(--space-2); line-height: 1.65; }
+  li::marker { color: var(--color-accent); }
 
   code {
-    font-family: var(--mono); font-size: 13px;
-    background: var(--bg-soft); border: 1px solid var(--border);
-    padding: 1px 6px; border-radius: 5px; color: var(--yellow);
+    font-family: var(--font-mono); font-size: 0.9em; font-weight: 400;
+    background: var(--color-paper-2); border: 1px solid var(--color-rule);
+    padding: 1px 6px; border-radius: 4px; color: var(--color-accent);
   }
   pre {
-    background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px;
-    padding: 16px 18px; overflow-x: auto; margin: 12px 0 18px; max-width: 780px;
+    background: var(--color-graphite); border: 1px solid var(--color-rule-2); border-radius: var(--radius-code);
+    padding: var(--space-4) var(--space-5); overflow-x: auto; margin: var(--space-4) 0 var(--space-5); max-width: 780px;
   }
-  pre code { background: none; border: none; padding: 0; color: #cfd6e4; font-size: 13px; line-height: 1.6; }
-  pre .c { color: #5b6478; }   /* comment */
-  pre .g { color: var(--green); }
-  pre .y { color: var(--yellow); }
-  pre .p { color: var(--pink); }
-  pre .b { color: #7ea2ff; }
+  pre code { background: none; border: none; padding: 0; color: var(--color-graphite-ink); font-size: var(--text-sm); line-height: 1.6; }
+  pre .c { color: oklch(55% 0.01 256); }
+  pre .g { color: oklch(70% 0.15 145); }
+  pre .y { color: oklch(80% 0.15 95); }
+  pre .p { color: oklch(65% 0.20 350); }
+  pre .b { color: oklch(70% 0.18 260); }
 
   .card {
-    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-    padding: 18px 20px; margin: 14px 0; max-width: 780px;
+    background: var(--color-paper); border: 1px solid var(--color-rule); border-radius: var(--radius-code);
+    padding: var(--space-4) var(--space-5); margin: var(--space-4) 0; max-width: 780px;
   }
-  .card.warn { border-left: 3px solid var(--pink); }
-  .card.tip { border-left: 3px solid var(--green); }
-  .card.note { border-left: 3px solid var(--yellow); }
-  .card .card-title { font-weight: 700; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
-  .card.warn .card-title { color: var(--pink); }
-  .card.tip .card-title { color: var(--green); }
-  .card.note .card-title { color: var(--yellow); }
+  .card.warn { border-left: 3px solid oklch(55% 0.22 25); }
+  .card.tip { border-left: 3px solid oklch(70% 0.15 145); }
+  .card.note { border-left: 3px solid oklch(80% 0.15 95); }
+  .card .card-title { font-family: var(--font-display); font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: var(--space-2); }
+  .card.warn .card-title { color: oklch(55% 0.22 25); }
+  .card.tip .card-title { color: oklch(70% 0.15 145); }
+  .card.note .card-title { color: oklch(80% 0.15 95); }
   .card p:last-child { margin-bottom: 0; }
 
-  table { border-collapse: collapse; width: 100%; max-width: 780px; margin: 12px 0 18px; font-size: 14px; }
-  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
-  th { color: var(--muted); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+  table { border-collapse: collapse; width: 100%; max-width: 780px; margin: var(--space-4) 0 var(--space-5); font-size: var(--text-sm); }
+  th, td { text-align: left; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--color-rule); vertical-align: top; }
+  th { color: var(--color-ink-3); font-family: var(--font-display); font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
   td code { white-space: nowrap; }
 
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 780px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); max-width: 780px; }
   @media (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } }
 
-  footer {
-    border-top: 1px solid var(--border); padding: 32px 0 48px; color: var(--muted); font-size: 14px;
+  .kbd {
+    font-family: var(--font-mono); font-size: var(--text-xs); font-weight: 500;
+    border: 1px solid var(--color-rule); border-bottom-width: 2px; border-radius: var(--radius-tight);
+    padding: 1px var(--space-2); background: var(--color-paper-2); color: var(--color-ink-2);
+    box-shadow: 0 1px 0 var(--color-rule);
   }
-  footer a { color: var(--muted); }
-  .kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; background: var(--bg-soft); }
+
+  footer {
+    border-top: 1px solid var(--color-rule); padding: var(--space-7) 0 var(--space-8); color: var(--color-ink-3); font-size: var(--text-sm);
+  }
+  footer a { color: var(--color-ink-3); border-bottom-color: transparent; }
+  footer a:hover { color: var(--color-accent); border-bottom-color: var(--color-accent); }
 </style>
 </head>
 <body>
@@ -149,25 +216,25 @@
 
     <nav class="toc" aria-label="Table of contents">
       <div class="toc-title">On this page</div>
-      <a class="step" data-n="00" href="#mental-model">The mental model</a>
-      <a class="step" data-n="01" href="#install">Install the skill</a>
-      <a class="step" data-n="02" href="#first-scene">Your first scene</a>
-      <a class="step" data-n="03" href="#prompting">Prompting your agent</a>
-      <a class="step" data-n="04" href="#workflow">The build workflow</a>
-      <a class="step" data-n="05" href="#examples">Bundled examples</a>
-      <a class="step" data-n="06" href="#avatar">Avatar worlds</a>
-      <a class="step" data-n="07" href="#testing">Headless testing</a>
-      <a class="step" data-n="08" href="#troubleshoot">Troubleshooting</a>
-      <a class="step" data-n="09" href="#maintain">Maintenance</a>
-      <a class="step" data-n="10" href="#reference-map">Reference map</a>
+      <a href="#mental-model"><span class="num">00</span>The mental model</a>
+      <a href="#install"><span class="num">01</span>Install the skill</a>
+      <a href="#first-scene"><span class="num">02</span>Your first scene</a>
+      <a href="#prompting"><span class="num">03</span>Prompting your agent</a>
+      <a href="#workflow"><span class="num">04</span>The build workflow</a>
+      <a href="#examples"><span class="num">05</span>Bundled examples</a>
+      <a href="#avatar"><span class="num">06</span>Avatar worlds</a>
+      <a href="#testing"><span class="num">07</span>Headless testing</a>
+      <a href="#troubleshoot"><span class="num">08</span>Troubleshooting</a>
+      <a href="#maintain"><span class="num">09</span>Maintenance</a>
+      <a href="#reference-map"><span class="num">10</span>Reference map</a>
     </nav>
 
     <main>
 
-      <section id="mental-model">
-        <h2><span class="n">00</span>The mental model (read this once)</h2>
+      <section id="mental-model" class="reveal">
+        <h2><span class="num">00</span>The mental model (read this once)</h2>
         <p class="lede">Everything else in this runbook follows from one idea.</p>
-        <p>An MML document is an HTML file with 3D tags. In an <strong>interactive</strong> document, the <code>&lt;script&gt;</code> runs <strong>once, on a server</strong>, against a single DOM. Browsers connect over WebSocket and receive a live mirror. When the script calls <code>setAttribute</code>, the server diffs the DOM and pushes the change to every connected client.</p>
+        <p>An MML document is an HTML file with 3D tags. In an <strong>interactive</strong> document, the <code><script></code> runs <strong>once, on a server</strong>, against a single DOM. Browsers connect over WebSocket and receive a live mirror. When the script calls <code>setAttribute</code>, the server diffs the DOM and pushes the change to every connected client.</p>
         <p>A normal web page is a handout — one copy per visitor. An MML document is a <strong>whiteboard at the front of the room</strong> — one server holds the marker, everyone sees the same board. Users are told apart by <code>event.detail.connectionId</code>.</p>
         <div class="card tip">
           <div class="card-title">Consequences you will use every day</div>
@@ -175,8 +242,8 @@
         </div>
       </section>
 
-      <section id="install">
-        <h2><span class="n">01</span>Install the skill</h2>
+      <section id="install" class="reveal">
+        <h2><span class="num">01</span>Install the skill</h2>
         <p class="lede">One command puts the skill where your agent looks for it.</p>
 <pre><code><span class="c"># clone and install (symlinks into every agent's skills folder)</span>
 git clone https://github.com/adityaarakeri/mml-skill.git
@@ -199,15 +266,15 @@ scripts/install.sh --copy     <span class="c"># copy instead of symlink (Windows
         </div>
       </section>
 
-      <section id="first-scene">
-        <h2><span class="n">02</span>Your first scene in 90 seconds</h2>
+      <section id="first-scene" class="reveal">
+        <h2><span class="num">02</span>Your first scene in 90 seconds</h2>
         <p class="lede">Scaffold, serve, and see the multiplayer magic trick.</p>
 <pre><code><span class="c"># 1. scaffold a project (picks up the current mml-cli version)</span>
 scripts/new-mml-project.sh ~/code/my-scene --example parkour
 cd ~/code/my-scene
 
 <span class="c"># 2. serve with live reload</span>
-npm run dev                   <span class="c"># -&gt; http://localhost:7079</span>
+npm run dev                   <span class="c"># -> http://localhost:7079</span>
 
 <span class="c"># 3. validate anytime</span>
 npx mml validate documents/scene.html</code></pre>
@@ -218,8 +285,8 @@ npx mml validate documents/scene.html</code></pre>
         </div>
       </section>
 
-      <section id="prompting">
-        <h2><span class="n">03</span>Prompting your agent</h2>
+      <section id="prompting" class="reveal">
+        <h2><span class="num">03</span>Prompting your agent</h2>
         <p class="lede">The skill triggers on MML-related asks. Be outcome-oriented; the skill supplies the how.</p>
         <table>
           <tr><th>Good prompt</th><th>What the skill makes the agent do</th></tr>
@@ -231,14 +298,14 @@ npx mml validate documents/scene.html</code></pre>
         <p>The skill also fires when a file merely <em>contains</em> <code>m-cube</code> or similar tags — you do not have to say "MML". To force it: <em>"Use the mml skill to ..."</em>.</p>
       </section>
 
-      <section id="workflow">
-        <h2><span class="n">04</span>The build workflow the skill enforces</h2>
+      <section id="workflow" class="reveal">
+        <h2><span class="num">04</span>The build workflow the skill enforces</h2>
         <p class="lede">Seven steps, in order. Skipping one is where bugs come from.</p>
         <ol>
           <li><strong>Read the reference first.</strong> Attribute names are exact (<code>font-color</code>, not <code>text-color</code>). Guessing produces documents that validate and render nothing.</li>
-          <li><strong>Decide static vs interactive.</strong> No <code>&lt;script&gt;</code> means any static host works. A script forces a server. Do not add scripts to documents that do not need them.</li>
+          <li><strong>Decide static vs interactive.</strong> No <code><script></code> means any static host works. A script forces a server. Do not add scripts to documents that do not need them.</li>
           <li><strong>Scaffold</strong> with <code>new-mml-project.sh</code> — dev/validate scripts, documents/, assets/, README.</li>
-          <li><strong>Write the document</strong>: one <code>&lt;body&gt;</code> root, scene tags first, one script at the end, every scripted element gets an <code>id</code>, script wrapped in <code>//&lt;![CDATA[</code> ... <code>//]]&gt;</code>.</li>
+          <li><strong>Write the document</strong>: one <code><body></code> root, scene tags first, one script at the end, every scripted element gets an <code>id</code>, script wrapped in <code>//<![CDATA[</code> ... <code>//]]></code>.</li>
           <li><strong>Validate</strong>: <code>npx mml validate</code>. The validator checks against the official schema — an unknown attribute is a real bug.</li>
           <li><strong>Serve and look</strong>: <code>npm run dev</code>, then the two-tab multiplayer check.</li>
           <li><strong>Hand over with a README</strong> — how to run, what each file is, how to deploy.</li>
@@ -246,43 +313,43 @@ npx mml validate documents/scene.html</code></pre>
         <h3>Rules of thumb that prevent the classic bugs</h3>
         <ul>
           <li>Y is up, units are meters, rotations are degrees. A default cube is centered on its position — lift it by half its height or it sits half-buried.</li>
-          <li>Always include an <code>&lt;m-light&gt;</code>; the CLI's client adds none, so unlit scenes render as black silhouettes.</li>
+          <li>Always include an <code><m-light></code>; the CLI's client adds none, so unlit scenes render as black silhouettes.</li>
           <li>Keep the scene near the origin (x/z within ±5, y 0–5); the default camera is at <code>0,5,10</code>.</li>
           <li>Never animate with a fast <code>setInterval</code> — every <code>setAttribute</code> is a network message to every client. Use <code>m-attr-anim</code> (document-time animation) or <code>m-attr-lerp</code> (smooths any scripted change); both cost zero ongoing messages.</li>
-          <li>Never write self-closing tags. <code>&lt;m-cube /&gt;</code> passes the XML validator but the HTML parser leaves it open, and everything after becomes its child.</li>
+          <li>Never write self-closing tags. <code><m-cube /></code> passes the XML validator but the HTML parser leaves it open, and everything after becomes its child.</li>
         </ul>
       </section>
 
-      <section id="examples">
-        <h2><span class="n">05</span>Bundled examples</h2>
-        <p class="lede">Three complete, validated documents in <code>assets/templates/</code>. Scaffold any of them with <code>--example &lt;name&gt;</code>.</p>
+      <section id="examples" class="reveal">
+        <h2><span class="num">05</span>Bundled examples</h2>
+        <p class="lede">Three complete, validated documents in <code>assets/templates/</code>. Scaffold any of them with <code>--example <name></code>.</p>
         <div class="grid2">
           <div class="card">
-            <div class="card-title" style="color: var(--green)">parkour</div>
+            <div class="card-title" style="color: var(--color-accent)">parkour</div>
             <p>A timed 10-platform course: start pad, 8 ordered checkpoints, finish. Per-player personal bests, a top-5 leaderboard, anti-cheat on checkpoint order, and dual collision+click input so it works in avatar worlds <em>and</em> the fly-camera viewer. The whole course is one editable <code>COURSE</code> array.</p>
           </div>
           <div class="card">
-            <div class="card-title" style="color: var(--blue)">disco-floor</div>
+            <div class="card-title" style="color: var(--color-accent)">disco-floor</div>
             <p>A 6x6 grid of clickable tiles cycling through a palette, with a live counter and a springy reset button. Demonstrates dynamic DOM construction, coordinate-derived ids, and <code>m-attr-lerp</code> polish.</p>
           </div>
           <div class="card">
-            <div class="card-title" style="color: var(--yellow)">game-of-life</div>
+            <div class="card-title" style="color: var(--color-accent)">game-of-life</div>
             <p>Conway's Game of Life as a wall display. The canonical grid pattern: state in a plain array, one element per live cell, only touching what changed each tick.</p>
           </div>
           <div class="card">
-            <div class="card-title" style="color: var(--purple)">scene (default)</div>
+            <div class="card-title" style="color: var(--color-accent)">scene (default)</div>
             <p>The minimal starter: a light, a cube, a label, and a click counter that reports which connection clicked — the smallest possible proof of multi-user state.</p>
           </div>
         </div>
       </section>
 
-      <section id="avatar">
-        <h2><span class="n">06</span>Avatar worlds: making it playable</h2>
+      <section id="avatar" class="reveal">
+        <h2><span class="num">06</span>Avatar worlds: making it playable</h2>
         <p class="lede">The CLI viewer gives you a fly camera. For a controllable character, serve your documents inside an avatar world.</p>
-<pre><code>mkdir world &amp;&amp; cd world
-npm init -y &amp;&amp; npm install @mml-io/3d-web-experience
-mkdir mml-documents           <span class="c"># put your MML documents here (auto-detected)</span>
-npx 3d-web-experience serve world.json --port 8085</code></pre>
+<pre><code><span class="c">mkdir world && cd world</span>
+<span class="c">npm init -y && npm install @mml-io/3d-web-experience</span>
+<span class="c">mkdir mml-documents           # put your MML documents here (auto-detected)</span>
+<span class="c">npx 3d-web-experience serve world.json --port 8085</span></code></pre>
 <pre><code><span class="c">// world.json</span>
 {
   <span class="b">"chat"</span>: <span class="g">true</span>,
@@ -305,11 +372,11 @@ npx 3d-web-experience serve world.json --port 8085</code></pre>
         </div>
       </section>
 
-      <section id="testing">
-        <h2><span class="n">07</span>Headless testing (no 3D client required)</h2>
+      <section id="testing" class="reveal">
+        <h2><span class="num">07</span>Headless testing (no 3D client required)</h2>
         <p class="lede">A Networked DOM server speaks a simple JSON protocol over WebSocket. You can smoke-test game logic from a script or CI.</p>
         <ol>
-          <li>Connect to <code>ws://host:port/&lt;document&gt;</code> with subprotocol <code>networked-dom-v0.1</code>.</li>
+          <li>Connect to <code>ws://host:port/<document></code> with subprotocol <code>networked-dom-v0.1</code>.</li>
           <li>The first messages include <code>{"type":"snapshot","snapshot":...}</code> — the full DOM tree with <code>nodeId</code>s. Walk it to map element ids to nodeIds.</li>
           <li>Send events: <code>{"type":"event","nodeId":N,"name":"click","bubbles":true,"params":{...}}</code>. Collision events work the same way with <code>params.position</code>.</li>
           <li>Assert on the <code>{"type":"attributeChange",...}</code> diffs the server broadcasts back.</li>
@@ -317,27 +384,27 @@ npx 3d-web-experience serve world.json --port 8085</code></pre>
         <p>This is how "player finishes course, leaderboard updates" becomes a CI assertion. Python's stdlib is enough if no websocket library is available. Recipe details: <code>references/avatar-worlds.md</code>.</p>
       </section>
 
-      <section id="troubleshoot">
-        <h2><span class="n">08</span>Troubleshooting: the greatest hits</h2>
+      <section id="troubleshoot" class="reveal">
+        <h2><span class="num">08</span>Troubleshooting: the greatest hits</h2>
         <p class="lede">The full list of thirteen lives in SKILL.md. These are the ones that account for most lost hours.</p>
         <table>
           <tr><th>Symptom</th><th>Cause and fix</th></tr>
-          <tr><td>Nothing renders</td><td>Scene is off-camera, or a model URL 404s. Drop a <code>&lt;m-cube color="red" y="0.5"&gt;</code> at the origin as a sanity check; check devtools network tab for failed .glb loads.</td></tr>
-          <tr><td>Everything is black silhouettes</td><td>No <code>&lt;m-light&gt;</code>. The CLI client adds none (viewer.mml.io does, which is why official examples look fine without one).</td></tr>
+          <tr><td>Nothing renders</td><td>Scene is off-camera, or a model URL 404s. Drop a <code><m-cube color="red" y="0.5"></code> at the origin as a sanity check; check devtools network tab for failed .glb loads.</td></tr>
+          <tr><td>Everything is black silhouettes</td><td>No <code><m-light></code>. The CLI client adds none (viewer.mml.io does, which is why official examples look fine without one).</td></tr>
           <tr><td>Attribute silently ignored</td><td>Misspelled name. Run <code>mml validate</code> — an unknown attribute is a real bug, not a style nit.</td></tr>
           <tr><td>Objects half underground</td><td>Primitives are centered on their position. Lift by half the height.</td></tr>
-          <tr><td>validate: "StartTag: invalid element name"</td><td>A bare <code>&lt;</code>, <code>&gt;</code> or <code>&amp;&amp;</code> in the script. Wrap it: <code>&lt;script&gt;//&lt;![CDATA[</code> ... <code>//]]&gt;&lt;/script&gt;</code>.</td></tr>
-          <tr><td>validate: "Extra content at end of document"</td><td>More than one top-level element. Wrap the file in one <code>&lt;body&gt;</code>.</td></tr>
+          <tr><td>validate: "StartTag: invalid element name"</td><td>A bare <code><</code>, <code>></code> or <code>&&</code> in the script. Wrap it: <code><script>//<![CDATA[</code> ... <code>//]]></script></code>.</td></tr>
+          <tr><td>validate: "Extra content at end of document"</td><td>More than one top-level element. Wrap the file in one <code><body></code>.</td></tr>
           <tr><td>Scene works, then everything is weirdly transformed</td><td>A self-closing tag upstream swallowed the rest of the document as children. Always write explicit closing tags.</td></tr>
           <tr><td>Jitter / lag with many users</td><td>Too many <code>setAttribute</code> calls per second. Switch to <code>m-attr-anim</code>/<code>m-attr-lerp</code> or lower the tick rate.</td></tr>
           <tr><td>Ghost users accumulate</td><td>Missing <code>window</code> <code>disconnected</code> handler. Clean up everything keyed by that <code>connectionId</code>.</td></tr>
           <tr><td>Script errors invisible</td><td>They print in the terminal running the server, not in any browser console.</td></tr>
-          <tr><td>Port still busy after killing the server (Windows)</td><td>The npx wrapper died but the node child survived. <code>netstat -ano | grep :7079</code>, then <code>taskkill -F -T -PID &lt;pid&gt;</code>.</td></tr>
+          <tr><td>Port still busy after killing the server (Windows)</td><td>The npx wrapper died but the node child survived. <code>netstat -ano | grep :7079</code>, then <code>taskkill -F -T -PID <pid></code>.</td></tr>
         </table>
       </section>
 
-      <section id="maintain">
-        <h2><span class="n">09</span>Maintenance: keeping the skill honest</h2>
+      <section id="maintain" class="reveal">
+        <h2><span class="num">09</span>Maintenance: keeping the skill honest</h2>
         <p class="lede">MML is a 0.x project. Any minor release can rename attributes. The skill assumes drift and checks for it.</p>
 <pre><code><span class="c"># is upstream still what the references describe?</span>
 scripts/check-upstream.sh            <span class="c"># report only; exit 1 on drift</span>
@@ -354,8 +421,8 @@ scripts/check-upstream.sh --accept   <span class="c"># regenerate elements.md, r
         </div>
       </section>
 
-      <section id="reference-map">
-        <h2><span class="n">10</span>Reference map: where to look things up</h2>
+      <section id="reference-map" class="reveal">
+        <h2><span class="num">10</span>Reference map: where to look things up</h2>
         <table>
           <tr><th>You need</th><th>Open</th></tr>
           <tr><td>An element's exact attributes</td><td><code>references/elements.md</code> (generated from the official schema)</td></tr>
@@ -378,5 +445,14 @@ scripts/check-upstream.sh --accept   <span class="c"># regenerate elements.md, r
   </div>
 </footer>
 
+<script>
+  // IntersectionObserver reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-in'); observer.unobserve(e.target); } });
+  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Theme already embedded — no palette swap needed
+</script>
 </body>
 </html>
