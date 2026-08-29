@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mml-skill Runbook — Teach your agent to build multiplayer 3D worlds</title>
+<meta name="description" content="Operational runbook for the mml-skill: install, build, validate, serve, test, and maintain MML documents with a coding agent.">
+<style>
+  :root {
+    --bg: #0b0e14;
+    --bg-soft: #11151f;
+    --card: #161b28;
+    --border: #232a3b;
+    --text: #e6e9f0;
+    --muted: #8b93a7;
+    --green: #06d6a0;
+    --blue: #4361ee;
+    --yellow: #ffd166;
+    --pink: #ff5470;
+    --purple: #a78bfa;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.65;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+
+  /* layout: sidebar + content */
+  .layout { display: grid; grid-template-columns: 240px 1fr; gap: 48px; align-items: start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } nav.toc { position: static; display: none; } }
+
+  header.hero {
+    padding: 72px 0 48px;
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 0%, rgba(67, 97, 238, 0.18), transparent),
+      radial-gradient(ellipse 50% 40% at 85% 10%, rgba(6, 214, 160, 0.10), transparent);
+  }
+  .eyebrow {
+    display: inline-block; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--green); border: 1px solid rgba(6,214,160,.35); border-radius: 999px;
+    padding: 4px 12px; margin-bottom: 20px;
+  }
+  h1 { font-size: 42px; line-height: 1.15; letter-spacing: -0.02em; }
+  h1 .accent { color: var(--purple); }
+  .sub { color: var(--muted); font-size: 18px; margin-top: 14px; max-width: 620px; }
+  .hero-links { margin-top: 26px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; padding: 10px 18px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    text-decoration: none; transition: transform .12s ease, opacity .12s ease;
+  }
+  .btn:hover { transform: translateY(-1px); opacity: .92; }
+  .btn-primary { background: var(--green); color: #06281f; }
+  .btn-ghost { border: 1px solid var(--border); color: var(--text); }
+
+  nav.toc {
+    position: sticky; top: 32px; font-size: 14px;
+    border-left: 1px solid var(--border); padding-left: 18px;
+  }
+  nav.toc .toc-title { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+  nav.toc a { display: block; color: var(--muted); text-decoration: none; padding: 4px 0; }
+  nav.toc a:hover { color: var(--text); }
+  nav.toc a.step::before { content: attr(data-n) "  "; color: var(--green); font-family: var(--mono); font-size: 12px; }
+
+  main { padding: 56px 0 96px; }
+  section { margin-bottom: 64px; scroll-margin-top: 24px; }
+  h2 {
+    font-size: 26px; letter-spacing: -0.01em; margin-bottom: 8px;
+    display: flex; align-items: baseline; gap: 12px;
+  }
+  h2 .n {
+    font-family: var(--mono); font-size: 15px; color: var(--green);
+    border: 1px solid rgba(6,214,160,.35); border-radius: 6px; padding: 1px 8px;
+  }
+  .lede { color: var(--muted); margin-bottom: 20px; max-width: 720px; }
+  h3 { font-size: 17px; margin: 26px 0 10px; color: var(--yellow); }
+  p { margin-bottom: 12px; max-width: 760px; }
+  a { color: var(--purple); }
+  strong { color: var(--text); }
+  ul, ol { margin: 0 0 14px 22px; max-width: 740px; }
+  li { margin-bottom: 6px; }
+
+  code {
+    font-family: var(--mono); font-size: 13px;
+    background: var(--bg-soft); border: 1px solid var(--border);
+    padding: 1px 6px; border-radius: 5px; color: var(--yellow);
+  }
+  pre {
+    background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 18px; overflow-x: auto; margin: 12px 0 18px; max-width: 780px;
+  }
+  pre code { background: none; border: none; padding: 0; color: #cfd6e4; font-size: 13px; line-height: 1.6; }
+  pre .c { color: #5b6478; }   /* comment */
+  pre .g { color: var(--green); }
+  pre .y { color: var(--yellow); }
+  pre .p { color: var(--pink); }
+  pre .b { color: #7ea2ff; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 20px; margin: 14px 0; max-width: 780px;
+  }
+  .card.warn { border-left: 3px solid var(--pink); }
+  .card.tip { border-left: 3px solid var(--green); }
+  .card.note { border-left: 3px solid var(--yellow); }
+  .card .card-title { font-weight: 700; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
+  .card.warn .card-title { color: var(--pink); }
+  .card.tip .card-title { color: var(--green); }
+  .card.note .card-title { color: var(--yellow); }
+  .card p:last-child { margin-bottom: 0; }
+
+  table { border-collapse: collapse; width: 100%; max-width: 780px; margin: 12px 0 18px; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+  td code { white-space: nowrap; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 780px; }
+  @media (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } }
+
+  footer {
+    border-top: 1px solid var(--border); padding: 32px 0 48px; color: var(--muted); font-size: 14px;
+  }
+  footer a { color: var(--muted); }
+  .kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; background: var(--bg-soft); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Runbook</span>
+    <h1>mml-skill: from zero to a <span class="accent">multiplayer 3D world</span></h1>
+    <p class="sub">The operational guide to using this skill with your coding agent — install it, build with it, validate, serve, test headlessly, and keep it current with upstream MML.</p>
+    <div class="hero-links">
+      <a class="btn btn-primary" href="#install">Start here</a>
+      <a class="btn btn-ghost" href="https://github.com/adityaarakeri/mml-skill">GitHub</a>
+      <a class="btn btn-ghost" href="https://mml.io">mml.io</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="layout">
+
+    <nav class="toc" aria-label="Table of contents">
+      <div class="toc-title">On this page</div>
+      <a class="step" data-n="00" href="#mental-model">The mental model</a>
+      <a class="step" data-n="01" href="#install">Install the skill</a>
+      <a class="step" data-n="02" href="#first-scene">Your first scene</a>
+      <a class="step" data-n="03" href="#prompting">Prompting your agent</a>
+      <a class="step" data-n="04" href="#workflow">The build workflow</a>
+      <a class="step" data-n="05" href="#examples">Bundled examples</a>
+      <a class="step" data-n="06" href="#avatar">Avatar worlds</a>
+      <a class="step" data-n="07" href="#testing">Headless testing</a>
+      <a class="step" data-n="08" href="#troubleshoot">Troubleshooting</a>
+      <a class="step" data-n="09" href="#maintain">Maintenance</a>
+      <a class="step" data-n="10" href="#reference-map">Reference map</a>
+    </nav>
+
+    <main>
+
+      <section id="mental-model">
+        <h2><span class="n">00</span>The mental model (read this once)</h2>
+        <p class="lede">Everything else in this runbook follows from one idea.</p>
+        <p>An MML document is an HTML file with 3D tags. In an <strong>interactive</strong> document, the <code>&lt;script&gt;</code> runs <strong>once, on a server</strong>, against a single DOM. Browsers connect over WebSocket and receive a live mirror. When the script calls <code>setAttribute</code>, the server diffs the DOM and pushes the change to every connected client.</p>
+        <p>A normal web page is a handout — one copy per visitor. An MML document is a <strong>whiteboard at the front of the room</strong> — one server holds the marker, everyone sees the same board. Users are told apart by <code>event.detail.connectionId</code>.</p>
+        <div class="card tip">
+          <div class="card-title">Consequences you will use every day</div>
+          <p>State lives in script variables on the server (and resets on reload). Browser-only APIs do not exist — no <code>localStorage</code>, no <code>requestAnimationFrame</code>. <code>fetch</code>, timers, and the standard DOM API all work. The clock is <code>document.timeline.currentTime</code>.</p>
+        </div>
+      </section>
+
+      <section id="install">
+        <h2><span class="n">01</span>Install the skill</h2>
+        <p class="lede">One command puts the skill where your agent looks for it.</p>
+<pre><code><span class="c"># clone and install (symlinks into every agent's skills folder)</span>
+git clone https://github.com/adityaarakeri/mml-skill.git
+cd mml-skill
+scripts/install.sh            <span class="c"># global: all projects</span>
+scripts/install.sh --project  <span class="c"># only the current repo</span>
+scripts/install.sh --copy     <span class="c"># copy instead of symlink (Windows-friendly)</span></code></pre>
+        <table>
+          <tr><th>Agent</th><th>Global path</th><th>Project path</th></tr>
+          <tr><td>Claude Code</td><td><code>~/.claude/skills/</code></td><td><code>.claude/skills/</code></td></tr>
+          <tr><td>OpenAI Codex CLI</td><td><code>~/.codex/skills/</code></td><td><code>.codex/skills/</code></td></tr>
+          <tr><td>Google Antigravity</td><td><code>~/.gemini/antigravity/skills/</code></td><td><code>.agent/skills/</code></td></tr>
+          <tr><td>OpenCode</td><td><code>~/.config/opencode/skills/</code></td><td><code>.opencode/skills/</code></td></tr>
+          <tr><td>Shared scanners</td><td><code>~/.agents/skills/</code></td><td><code>.agents/skills/</code></td></tr>
+        </table>
+        <p>Restart the agent (or start a new session) so it re-scans its skills folder. On Claude.ai, upload <code>SKILL.md</code> in a chat and press "Save skill".</p>
+        <div class="card note">
+          <div class="card-title">Prerequisites</div>
+          <p>Node.js 16+ and npm (for <code>@mml-io/mml-cli</code>), bash (git-bash works on Windows), and a modern browser. No accounts, no API keys.</p>
+        </div>
+      </section>
+
+      <section id="first-scene">
+        <h2><span class="n">02</span>Your first scene in 90 seconds</h2>
+        <p class="lede">Scaffold, serve, and see the multiplayer magic trick.</p>
+<pre><code><span class="c"># 1. scaffold a project (picks up the current mml-cli version)</span>
+scripts/new-mml-project.sh ~/code/my-scene --example parkour
+cd ~/code/my-scene
+
+<span class="c"># 2. serve with live reload</span>
+npm run dev                   <span class="c"># -&gt; http://localhost:7079</span>
+
+<span class="c"># 3. validate anytime</span>
+npx mml validate documents/scene.html</code></pre>
+        <p>Now the test that proves the whole model: <strong>open two browser tabs</strong> at <code>localhost:7079</code>. Click the cube in one tab. It changes in both. That is the networked DOM working — and it is also the cheapest regression test you have.</p>
+        <div class="card warn">
+          <div class="card-title">Windows note</div>
+          <p>cmd.exe does not expand globs. <code>mml validate documents/*.html</code> fails with "File not found" — list files explicitly, or run from git-bash.</p>
+        </div>
+      </section>
+
+      <section id="prompting">
+        <h2><span class="n">03</span>Prompting your agent</h2>
+        <p class="lede">The skill triggers on MML-related asks. Be outcome-oriented; the skill supplies the how.</p>
+        <table>
+          <tr><th>Good prompt</th><th>What the skill makes the agent do</th></tr>
+          <tr><td>"Make me a Game of Life in MML I can run locally"</td><td>Scaffold a project, use the grid pattern (state in arrays, DOM as projection), validate, serve, write a README</td></tr>
+          <tr><td>"Build a parkour course that scores players on time"</td><td>Collision-driven checkpoints, <code>document.timeline</code> scoring, per-player bests keyed by <code>connectionId</code></td></tr>
+          <tr><td>"Add a scoreboard when someone steps on the platform"</td><td><code>collision-interval</code> + <code>collisionstart</code>/<code>collisionend</code>, a <code>Set</code> of connectionIds, a <code>disconnected</code> handler</td></tr>
+          <tr><td>"Why does my m-model not show up?"</td><td>Walk the known failure list: missing light, off-camera placement, 404 on the .glb, misspelled attribute</td></tr>
+        </table>
+        <p>The skill also fires when a file merely <em>contains</em> <code>m-cube</code> or similar tags — you do not have to say "MML". To force it: <em>"Use the mml skill to ..."</em>.</p>
+      </section>
+
+      <section id="workflow">
+        <h2><span class="n">04</span>The build workflow the skill enforces</h2>
+        <p class="lede">Seven steps, in order. Skipping one is where bugs come from.</p>
+        <ol>
+          <li><strong>Read the reference first.</strong> Attribute names are exact (<code>font-color</code>, not <code>text-color</code>). Guessing produces documents that validate and render nothing.</li>
+          <li><strong>Decide static vs interactive.</strong> No <code>&lt;script&gt;</code> means any static host works. A script forces a server. Do not add scripts to documents that do not need them.</li>
+          <li><strong>Scaffold</strong> with <code>new-mml-project.sh</code> — dev/validate scripts, documents/, assets/, README.</li>
+          <li><strong>Write the document</strong>: one <code>&lt;body&gt;</code> root, scene tags first, one script at the end, every scripted element gets an <code>id</code>, script wrapped in <code>//&lt;![CDATA[</code> ... <code>//]]&gt;</code>.</li>
+          <li><strong>Validate</strong>: <code>npx mml validate</code>. The validator checks against the official schema — an unknown attribute is a real bug.</li>
+          <li><strong>Serve and look</strong>: <code>npm run dev</code>, then the two-tab multiplayer check.</li>
+          <li><strong>Hand over with a README</strong> — how to run, what each file is, how to deploy.</li>
+        </ol>
+        <h3>Rules of thumb that prevent the classic bugs</h3>
+        <ul>
+          <li>Y is up, units are meters, rotations are degrees. A default cube is centered on its position — lift it by half its height or it sits half-buried.</li>
+          <li>Always include an <code>&lt;m-light&gt;</code>; the CLI's client adds none, so unlit scenes render as black silhouettes.</li>
+          <li>Keep the scene near the origin (x/z within ±5, y 0–5); the default camera is at <code>0,5,10</code>.</li>
+          <li>Never animate with a fast <code>setInterval</code> — every <code>setAttribute</code> is a network message to every client. Use <code>m-attr-anim</code> (document-time animation) or <code>m-attr-lerp</code> (smooths any scripted change); both cost zero ongoing messages.</li>
+          <li>Never write self-closing tags. <code>&lt;m-cube /&gt;</code> passes the XML validator but the HTML parser leaves it open, and everything after becomes its child.</li>
+        </ul>
+      </section>
+
+      <section id="examples">
+        <h2><span class="n">05</span>Bundled examples</h2>
+        <p class="lede">Three complete, validated documents in <code>assets/templates/</code>. Scaffold any of them with <code>--example &lt;name&gt;</code>.</p>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title" style="color: var(--green)">parkour</div>
+            <p>A timed 10-platform course: start pad, 8 ordered checkpoints, finish. Per-player personal bests, a top-5 leaderboard, anti-cheat on checkpoint order, and dual collision+click input so it works in avatar worlds <em>and</em> the fly-camera viewer. The whole course is one editable <code>COURSE</code> array.</p>
+          </div>
+          <div class="card">
+            <div class="card-title" style="color: var(--blue)">disco-floor</div>
+            <p>A 6x6 grid of clickable tiles cycling through a palette, with a live counter and a springy reset button. Demonstrates dynamic DOM construction, coordinate-derived ids, and <code>m-attr-lerp</code> polish.</p>
+          </div>
+          <div class="card">
+            <div class="card-title" style="color: var(--yellow)">game-of-life</div>
+            <p>Conway's Game of Life as a wall display. The canonical grid pattern: state in a plain array, one element per live cell, only touching what changed each tick.</p>
+          </div>
+          <div class="card">
+            <div class="card-title" style="color: var(--purple)">scene (default)</div>
+            <p>The minimal starter: a light, a cube, a label, and a click counter that reports which connection clicked — the smallest possible proof of multi-user state.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="avatar">
+        <h2><span class="n">06</span>Avatar worlds: making it playable</h2>
+        <p class="lede">The CLI viewer gives you a fly camera. For a controllable character, serve your documents inside an avatar world.</p>
+<pre><code>mkdir world &amp;&amp; cd world
+npm init -y &amp;&amp; npm install @mml-io/3d-web-experience
+mkdir mml-documents           <span class="c"># put your MML documents here (auto-detected)</span>
+npx 3d-web-experience serve world.json --port 8085</code></pre>
+<pre><code><span class="c">// world.json</span>
+{
+  <span class="b">"chat"</span>: <span class="g">true</span>,
+  <span class="b">"auth"</span>: { <span class="b">"allowAnonymous"</span>: <span class="g">true</span> },
+  <span class="b">"mmlDocuments"</span>: {
+    <span class="b">"parkour.html"</span>: {
+      <span class="b">"url"</span>: <span class="y">"ws:///mml-documents/parkour.html"</span>,
+      <span class="b">"position"</span>: { <span class="b">"x"</span>: 0, <span class="b">"y"</span>: 0, <span class="b">"z"</span>: 0 }
+    }
+  }
+}</code></pre>
+        <p>Controls: <span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span> to run, <span class="kbd">Space</span> to jump (double-jump supported), <span class="kbd">Shift</span> to sprint, mouse to look. Every browser tab is a separate avatar and <code>connectionId</code>. Add <code>--host 0.0.0.0</code> for LAN multiplayer.</p>
+        <div class="card note">
+          <div class="card-title">Design for real legs</div>
+          <p>The avatar reliably clears about 0.6 m of rise per jump and 2–3 m gaps between platform centers; platforms below 1.2 m square get frustrating. A course designed for the fly camera is usually unplayable by an avatar — retune spacing when you move a scene into a world. Full numbers in <code>references/avatar-worlds.md</code>.</p>
+        </div>
+        <div class="card warn">
+          <div class="card-title">Pointer lock caveat</div>
+          <p>The avatar camera needs the Pointer Lock API. Embedded webviews (app preview panes, some iframes) often deny it — WASD works but mouse-look does not. Open the world in a real browser tab.</p>
+        </div>
+      </section>
+
+      <section id="testing">
+        <h2><span class="n">07</span>Headless testing (no 3D client required)</h2>
+        <p class="lede">A Networked DOM server speaks a simple JSON protocol over WebSocket. You can smoke-test game logic from a script or CI.</p>
+        <ol>
+          <li>Connect to <code>ws://host:port/&lt;document&gt;</code> with subprotocol <code>networked-dom-v0.1</code>.</li>
+          <li>The first messages include <code>{"type":"snapshot","snapshot":...}</code> — the full DOM tree with <code>nodeId</code>s. Walk it to map element ids to nodeIds.</li>
+          <li>Send events: <code>{"type":"event","nodeId":N,"name":"click","bubbles":true,"params":{...}}</code>. Collision events work the same way with <code>params.position</code>.</li>
+          <li>Assert on the <code>{"type":"attributeChange",...}</code> diffs the server broadcasts back.</li>
+        </ol>
+        <p>This is how "player finishes course, leaderboard updates" becomes a CI assertion. Python's stdlib is enough if no websocket library is available. Recipe details: <code>references/avatar-worlds.md</code>.</p>
+      </section>
+
+      <section id="troubleshoot">
+        <h2><span class="n">08</span>Troubleshooting: the greatest hits</h2>
+        <p class="lede">The full list of thirteen lives in SKILL.md. These are the ones that account for most lost hours.</p>
+        <table>
+          <tr><th>Symptom</th><th>Cause and fix</th></tr>
+          <tr><td>Nothing renders</td><td>Scene is off-camera, or a model URL 404s. Drop a <code>&lt;m-cube color="red" y="0.5"&gt;</code> at the origin as a sanity check; check devtools network tab for failed .glb loads.</td></tr>
+          <tr><td>Everything is black silhouettes</td><td>No <code>&lt;m-light&gt;</code>. The CLI client adds none (viewer.mml.io does, which is why official examples look fine without one).</td></tr>
+          <tr><td>Attribute silently ignored</td><td>Misspelled name. Run <code>mml validate</code> — an unknown attribute is a real bug, not a style nit.</td></tr>
+          <tr><td>Objects half underground</td><td>Primitives are centered on their position. Lift by half the height.</td></tr>
+          <tr><td>validate: "StartTag: invalid element name"</td><td>A bare <code>&lt;</code>, <code>&gt;</code> or <code>&amp;&amp;</code> in the script. Wrap it: <code>&lt;script&gt;//&lt;![CDATA[</code> ... <code>//]]&gt;&lt;/script&gt;</code>.</td></tr>
+          <tr><td>validate: "Extra content at end of document"</td><td>More than one top-level element. Wrap the file in one <code>&lt;body&gt;</code>.</td></tr>
+          <tr><td>Scene works, then everything is weirdly transformed</td><td>A self-closing tag upstream swallowed the rest of the document as children. Always write explicit closing tags.</td></tr>
+          <tr><td>Jitter / lag with many users</td><td>Too many <code>setAttribute</code> calls per second. Switch to <code>m-attr-anim</code>/<code>m-attr-lerp</code> or lower the tick rate.</td></tr>
+          <tr><td>Ghost users accumulate</td><td>Missing <code>window</code> <code>disconnected</code> handler. Clean up everything keyed by that <code>connectionId</code>.</td></tr>
+          <tr><td>Script errors invisible</td><td>They print in the terminal running the server, not in any browser console.</td></tr>
+          <tr><td>Port still busy after killing the server (Windows)</td><td>The npx wrapper died but the node child survived. <code>netstat -ano | grep :7079</code>, then <code>taskkill -F -T -PID &lt;pid&gt;</code>.</td></tr>
+        </table>
+      </section>
+
+      <section id="maintain">
+        <h2><span class="n">09</span>Maintenance: keeping the skill honest</h2>
+        <p class="lede">MML is a 0.x project. Any minor release can rename attributes. The skill assumes drift and checks for it.</p>
+<pre><code><span class="c"># is upstream still what the references describe?</span>
+scripts/check-upstream.sh            <span class="c"># report only; exit 1 on drift</span>
+scripts/check-upstream.sh --accept   <span class="c"># regenerate elements.md, re-pin upstream.lock</span></code></pre>
+        <ul>
+          <li><code>upstream.lock</code> pins the exact upstream commit and file hashes the skill was built from (currently MML 0.26.1).</li>
+          <li>The bundled GitHub Action re-checks every Monday and opens an issue when something moved.</li>
+          <li>At the start of any MML task, agents compare <code>npm view @mml-io/mml-cli version</code> against the lock and warn before trusting the references.</li>
+          <li>The drift check also re-validates every bundled template against the new CLI — catching behavioral changes (like parser rules) that no file diff would show.</li>
+        </ul>
+        <div class="card tip">
+          <div class="card-title">If drift is detected</div>
+          <p><code>elements.md</code> regenerates automatically. <code>events.md</code>, <code>local-dev.md</code>, and the SKILL.md workflow are hand-written — read the printed diffs, reconcile by hand, then rerun with <code>--accept</code>.</p>
+        </div>
+      </section>
+
+      <section id="reference-map">
+        <h2><span class="n">10</span>Reference map: where to look things up</h2>
+        <table>
+          <tr><th>You need</th><th>Open</th></tr>
+          <tr><td>An element's exact attributes</td><td><code>references/elements.md</code> (generated from the official schema)</td></tr>
+          <tr><td>Event payloads, <code>connectionId</code> lifecycle</td><td><code>references/events.md</code></td></tr>
+          <tr><td>Why something behaves the way it does</td><td><code>references/concepts.md</code></td></tr>
+          <tr><td>A working pattern to copy</td><td><code>references/examples.md</code> (all official examples, annotated)</td></tr>
+          <tr><td>CLI flags, hosting, React, deployment</td><td><code>references/local-dev.md</code></td></tr>
+          <tr><td>Avatar worlds, jump physics, protocol testing</td><td><code>references/avatar-worlds.md</code></td></tr>
+          <tr><td>The full workflow and footgun list</td><td><code>SKILL.md</code></td></tr>
+        </table>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p><a href="https://github.com/adityaarakeri/mml-skill">mml-skill</a> — MIT licensed. Built on <a href="https://mml.io">MML</a> by the mml-io team. This runbook is <code>docs/index.html</code> in the repo; serve it with GitHub Pages or open it locally.</p>
+  </div>
+</footer>
+
+</body>
+</html>
