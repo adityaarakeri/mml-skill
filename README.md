@@ -1,130 +1,196 @@
-# mml skill
+<div align="center">
 
-A skill that teaches coding agents (Claude Code, Codex CLI, Antigravity, OpenCode) how to build
-and run MML documents. MML is Metaverse Markup Language from mml.io: HTML with 3D tags, plus a
-server-side script model that makes every document multi-user by default.
+# 🌐 mml-skill
 
-A skill is just a folder with a `SKILL.md` in it. The agent reads the `description` in the
-frontmatter to decide when the skill applies, then reads the body and the `references/` files
-when it does. All four agents read the same format. They only differ in which folder they look
-in, which is what `scripts/install.sh` handles.
+### Teach your coding agent to build multiplayer 3D worlds.
 
-## What is in here
+**One skill. Four agents. Infinite metaverse.**
 
-```
-mml/
-  SKILL.md                     the instructions the agent follows
-  README.md                    this file
-  references/
-    elements.md                every element and attribute, generated from the official XSD schema
-    events.md                  event types, event.detail payloads, connection lifecycle
-    concepts.md                the networked DOM model, document time, performance
-    examples.md                the official examples (Game of Life, dice, clock, ...) annotated
-    local-dev.md               MML CLI, starter project server, React, viewer, deployment
-  scripts/
-    new-mml-project.sh         scaffold a local project with dev / validate scripts and a README
-    install.sh                 symlink or copy this skill into each agent's skills folder
-    check-upstream.sh          detect and absorb upstream MML changes
-    generate-elements-reference.py   rebuild elements.md from mml.xsd
-  upstream.lock                pinned upstream commit + file hashes
-  .github/workflows/           weekly drift check
-  assets/templates/
-    scene.html                 minimal interactive starter document
-    game-of-life.html          Conway's Game of Life, adapted from mml.io/examples
-    README.template.md         README written into scaffolded projects
-    gitignore
-```
+[![License: MIT](https://img.shields.io/badge/License-MIT-06d6a0.svg)](LICENSE)
+[![MML](https://img.shields.io/badge/MML-0.26.1-4361ee.svg)](https://mml.io)
+[![Agents](https://img.shields.io/badge/agents-Claude%20Code%20%7C%20Codex%20%7C%20Antigravity%20%7C%20OpenCode-a78bfa.svg)](#-works-with)
+[![Upstream drift check](https://img.shields.io/badge/upstream-auto--checked%20weekly-ffd166.svg)](.github/workflows/check-upstream.yml)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-ff5470.svg)](#-contributing)
 
-`references/elements.md` was produced by `scripts/generate-elements-reference.py` from
-`packages/schema/src/schema-src/mml.xsd` in https://github.com/mml-io/mml. Re-run it against a
-newer checkout when MML adds elements.
+<br>
 
-## Install
+*"Make me a multiplayer parkour game with a live leaderboard"* → **your agent ships it, validated and running, in one prompt.**
 
-Clone or copy this folder somewhere permanent (for example `~/skills/mml`), then:
+[Quick start](#-quick-start) · [What it can do](#-what-your-agent-learns-to-build) · [What's inside](#-whats-inside) · [How it works](#-how-it-works) · [Stay current](#-never-goes-stale)
+
+</div>
+
+---
+
+## ⚡ TL;DR
+
+[MML](https://mml.io) (Metaverse Markup Language) is HTML with 3D tags — `<m-cube>`, `<m-model>`, `<m-label>` — where the `<script>` runs **once, on a server**, and every connected user sees the same live scene. Multiplayer by default. No netcode. Ever.
+
+This skill hands your coding agent everything it needs to build with it: the complete element schema, the event model, battle-tested patterns, scaffolding scripts, and the sharp edges nobody documents.
 
 ```bash
-cd ~/skills/mml
-scripts/install.sh            # global: available in every project
-scripts/install.sh --project  # only in the current repo (run from the repo root)
-scripts/install.sh --copy     # copy instead of symlink
+git clone https://github.com/adityaarakeri/mml-skill.git
+cd mml-skill && scripts/install.sh
 ```
 
-That creates a `mml/` entry in each of these:
+Restart your agent. Say *"build me a 3D game of life I can run locally."* Done.
 
-| agent | global | project |
-|---|---|---|
-| Claude Code | `~/.claude/skills/` | `.claude/skills/` |
-| Codex CLI | `~/.codex/skills/` | `.codex/skills/` |
-| Antigravity | `~/.gemini/antigravity/skills/` | `.agent/skills/` |
-| OpenCode | `~/.config/opencode/skills/` | `.opencode/skills/` |
-| shared | `~/.agents/skills/` | `.agents/skills/` |
+---
 
-The shared `.agents/skills` path is scanned by several tools as well, so it is included as a
-fallback. Restart the agent after installing so it re-scans.
+## 🚀 Quick start
 
-If you would rather install by hand, copy the folder into any of those locations. If an agent
-uses an `AGENTS.md` or `CLAUDE.md` instead of a skills folder, add a line like
-"For MML work, read `<path>/mml/SKILL.md` first."
+**1 · Install the skill** (symlinks into every agent's skills folder):
 
-### Claude.ai
+```bash
+scripts/install.sh            # global — all projects
+scripts/install.sh --project  # just this repo
+scripts/install.sh --copy     # copy instead of symlink (Windows-friendly)
+```
 
-Upload the packaged `mml.skill` file (or the bare `SKILL.md`) in a chat and press "Save skill".
+**2 · Ask your agent for literally anything 3D:**
 
-## Using it
+> - "Make me a Game of Life in MML I can run locally"
+> - "Build a parkour course that scores players on completion time"
+> - "Add a scoreboard that updates when someone steps on the platform"
+> - "Why does my m-model not show up?" *(it knows. it's the light.)*
 
-Ask the agent for anything MML-related and it should pick the skill up on its own:
-
-- "Make me a Game of Life in MML I can run locally"
-- "Add a scoreboard label to this m-group that updates when someone steps on the platform"
-- "Why does my m-model not show up?"
-
-To force it: "Use the mml skill to ...".
-
-The scaffold script can also be run directly:
+**3 · Or scaffold by hand:**
 
 ```bash
 scripts/new-mml-project.sh ~/code/my-scene --example game-of-life
-cd ~/code/my-scene && npm run dev
+cd ~/code/my-scene && npm run dev     # → http://localhost:7079 🎉
 ```
 
-## Keeping it current
+Open two browser tabs. Click a cube in one. Watch it change in **both**. That's MML.
 
-MML is 0.x, so any minor release can change tags, attributes, or CLI flags. The skill pins the
-exact upstream commit it was built from in `upstream.lock` and ships a drift check:
+---
+
+## 🎮 What your agent learns to build
+
+| You say | Agent ships |
+|---|---|
+| "a dice I can roll" | GLB model + scripted `m-attr-anim` with bounce easing — physics *feel* with zero physics engine |
+| "a shared whiteboard-style game" | Server-authoritative state keyed by `connectionId`, synced to every client automatically |
+| "a parkour game with a timer" | Collision-driven checkpoints, `document.timeline` scoring, per-player personal bests, floating leaderboard |
+| "a live weather board" | Server-side `fetch` to any API on an interval, pushed into 3D labels |
+| "a world people can walk around in" | Full avatar world via `@mml-io/3d-web-experience` — WASD, jump, chat — with jump-distances tuned from **measured** avatar movement |
+
+Every pattern comes from the official examples — annotated with *why* they're shaped that way, including the bugs in the originals (yes, we found them; yes, they're documented).
+
+---
+
+## 📦 What's inside
+
+```
+mml-skill/
+├── SKILL.md                      ← the playbook: workflow, patterns, 13 documented footguns
+├── references/
+│   ├── elements.md               ← every element & attribute, GENERATED from the official schema
+│   ├── events.md                 ← event payloads, connectionId lifecycle, cheat sheet
+│   ├── concepts.md               ← the networked DOM model, document time, performance math
+│   ├── examples.md               ← all 9 official examples, annotated line by line
+│   ├── local-dev.md              ← CLI, starter server, React, viewer, deployment
+│   └── avatar-worlds.md          ← avatar worlds, measured jump physics, wire-protocol testing
+├── scripts/
+│   ├── new-mml-project.sh        ← scaffold: package.json + docs + assets + README
+│   ├── install.sh                ← one command, four agents
+│   ├── check-upstream.sh         ← drift detector: schema, events, CLI, templates
+│   └── generate-elements-reference.py
+├── assets/templates/             ← validated starter documents
+├── upstream.lock                 ← pinned upstream commit + file hashes
+└── .github/workflows/            ← weekly automated drift check
+```
+
+### The details that make it world-class
+
+- 🧾 **Generated, not transcribed** — `elements.md` is built from MML's own `mml.xsd`. Attribute names are *exact* (`font-color`, not `text-color`), because guessing produces scenes that validate and render nothing.
+- 🔥 **13 documented footguns** — the XML-vs-HTML dual-parser trap, the CDATA script wrapper, self-closing tag inheritance bugs, the missing-light black-scene special, Windows glob expansion, orphaned node servers…
+- 📏 **Measured avatar physics** — jump clears ~0.6 m rise, 2–3 m gaps. Courses designed for a fly-camera are *unplayable* by avatars; this skill knows the difference.
+- 🤖 **Headless game testing** — a recipe for connecting to the Networked DOM wire protocol (`networked-dom-v0.1`) as a fake client: fire events, assert on attribute diffs, CI-test a multiplayer game with no 3D client at all.
+
+---
+
+## 🧠 How it works
+
+A normal web page is a **handout** — every visitor gets their own copy.
+An MML document is a **whiteboard at the front of the room** — one server holds the marker, everyone sees the same board.
+
+```html
+<m-cube id="btn" y="0.5" color="red"></m-cube>
+<script>//<![CDATA[
+  document.getElementById("btn").addEventListener("click", (e) => {
+    // runs ON THE SERVER — e.detail.connectionId says who clicked
+    e.currentTarget.setAttribute("color", "green");
+  });
+//]]></script>
+```
+
+Click it in Tokyo, it turns green in Toronto. The server diffs the DOM and streams the change to every connected client. **That one idea makes every document multiplayer** — and this skill teaches your agent to think in it natively: state in arrays, DOM as projection, animations as attributes (zero per-frame messages), users as `connectionId`s.
+
+---
+
+## 🤝 Works with
+
+| Agent | Global install path | Project path |
+|---|---|---|
+| **Claude Code** | `~/.claude/skills/` | `.claude/skills/` |
+| **OpenAI Codex CLI** | `~/.codex/skills/` | `.codex/skills/` |
+| **Google Antigravity** | `~/.gemini/antigravity/skills/` | `.agent/skills/` |
+| **OpenCode** | `~/.config/opencode/skills/` | `.opencode/skills/` |
+| **anything scanning** `~/.agents/skills/` | ✓ | `.agents/skills/` |
+
+Same `SKILL.md` format everywhere — `install.sh` just puts it in all the right places. Symlinked, so one edit updates every agent.
+
+**Claude.ai**: upload the `SKILL.md` in a chat and hit "Save skill."
+
+---
+
+## 🔄 Never goes stale
+
+MML is a 0.x project — any minor release can rename attributes. Most skills rot. This one **watches upstream**:
 
 ```bash
-scripts/check-upstream.sh            # report; exit 1 if anything upstream changed
-scripts/check-upstream.sh --accept   # regenerate elements.md, rewrite upstream.lock
+scripts/check-upstream.sh            # detect drift: schema, events, CLI flags, templates
+scripts/check-upstream.sh --accept   # regenerate elements.md, re-pin upstream.lock
 ```
 
-It fetches the newest `@mml-io/mml-cli` release, then:
+- 📌 Exact upstream commit pinned in [`upstream.lock`](upstream.lock)
+- 🗓️ [GitHub Action](.github/workflows/check-upstream.yml) re-checks **every Monday** and opens an issue on drift
+- 🛡️ At runtime, agents compare the live npm version against the lock and warn before trusting the references
+- 🧪 Bundled templates are re-validated against each new CLI — catching *behavioral* changes no file diff would show
 
-1. Diffs `mml.xsd` and regenerates `references/elements.md` if it changed. Fully automatic.
-2. Diffs `events.d.ts` and the CLI README and prints the diff. These feed hand-written files
-   (`events.md`, `local-dev.md`, the workflow in `SKILL.md`), so a person reads the diff and
-   edits.
-3. Reports if the starter project moved.
-4. Validates the bundled templates with the new CLI, which catches behavioural changes (like
-   the XML root and CDATA rules) that no file diff would show.
+---
 
-`.github/workflows/check-upstream.yml` runs this every Monday and opens an issue with the
-output when it fails. Copy it into whatever repo holds the skill.
+## 🌍 The wider MML universe
 
-At runtime the agent also compares the npm version against `upstream.lock` before using the
-reference files, and warns the user if they have diverged.
+- [mmleditor.com](https://mmleditor.com) — browser editor, free hosting, community creations to remix
+- [`mml-io/3d-web-experience`](https://github.com/mml-io/3d-web-experience) — avatar worlds (the skill covers setup in [`references/avatar-worlds.md`](references/avatar-worlds.md))
+- [viewer.mml.io](https://viewer.mml.io) — point it at any document URL, embed anywhere
+- Renderers for **three.js**, **PlayCanvas**, and **Unreal Engine** — same tags everywhere
 
-## Prior art
+---
 
-There is an unrelated `mml` skill on skills.sh (from `skills.volces.com/skills/clawhub/honeybee1130`).
-It is a single-file cheat sheet whose main reference points at a path on its author's machine.
-If you install both, the folder names collide; rename one.
+## 🙌 Contributing
 
-## Sources
+Found a footgun that isn't documented? A pattern the skill should teach? A drift the Monday bot missed?
 
-- https://mml.io/docs (guides, element and event reference)
-- https://mml.io/examples (Game of Life and the other examples)
-- https://github.com/mml-io/mml (schema, CLI, web client)
-- https://github.com/mml-io/mml-website (source of the docs and examples)
-- https://github.com/mml-io/mml-starter-project (Express + WebSocket host)
-- https://github.com/mml-io/mml-react-starter-project
+**PRs welcome.** The bar: every claim in the references must be either generated from upstream source or verified by actually running it. No guessed attributes. No untested snippets.
+
+```bash
+scripts/check-upstream.sh        # before you PR — make sure you're building on current MML
+```
+
+---
+
+## 📜 License
+
+[MIT](LICENSE) — take it, ship it, build worlds with it.
+
+<div align="center">
+<br>
+
+**Built with the conviction that the open metaverse should be as easy as HTML.**
+
+⭐ *If your agent shipped something 3D today, star the repo so others find it.*
+
+</div>
