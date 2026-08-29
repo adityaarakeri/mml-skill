@@ -2,7 +2,7 @@
 # Scaffold a local MML development project.
 #
 # Usage:
-#   scripts/new-mml-project.sh <target-dir> [--example game-of-life] [--no-install]
+#   scripts/new-mml-project.sh <target-dir> [--example game-of-life|parkour|disco-floor] [--no-install]
 #
 # Creates:
 #   <target-dir>/package.json      dev / serve-all / validate scripts (uses @mml-io/mml-cli)

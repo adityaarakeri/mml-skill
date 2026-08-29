@@ -57,9 +57,11 @@ scripts/install.sh --copy     # copy instead of symlink (Windows-friendly)
 **3 · Or scaffold by hand:**
 
 ```bash
-scripts/new-mml-project.sh ~/code/my-scene --example game-of-life
+scripts/new-mml-project.sh ~/code/my-scene --example parkour
 cd ~/code/my-scene && npm run dev     # → http://localhost:7079
 ```
+
+Ships with three complete examples: `game-of-life`, `parkour` (timed course with checkpoints, scoring, and a leaderboard), and `disco-floor` (multiplayer clickable tile grid).
 
 Open two browser tabs. Click a cube in one. Watch it change in **both**. That's MML.
 
@@ -96,7 +98,9 @@ mml-skill/
 │   ├── install.sh                ← one command, four agents
 │   ├── check-upstream.sh         ← drift detector: schema, events, CLI, templates
 │   └── generate-elements-reference.py
-├── assets/templates/             ← validated starter documents
+├── assets/templates/             ← validated starter documents, incl. two complete games
+│   ├── parkour.html              ← timed parkour: checkpoints, scoring, leaderboard
+│   └── disco-floor.html          ← clickable tile grid with lerp animations
 ├── upstream.lock                 ← pinned upstream commit + file hashes
 └── .github/workflows/            ← weekly automated drift check
 ```

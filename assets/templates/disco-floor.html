@@ -1,0 +1,95 @@
+<body>
+  <m-light type="point" intensity="500" x="6" y="10" z="8"></m-light>
+  <m-light type="point" intensity="250" color="#8888ff" x="-6" y="8" z="-4"></m-light>
+
+  <m-label id="title" content="MML Disco Floor — click a tile!" y="4.5" x="0" z="-2"
+    width="7" height="0.8" font-size="40" alignment="center" color="#111111"
+    font-color="#ffffff"></m-label>
+  <m-label id="counter" content="0 tiles lit" y="3.6" x="0" z="-2"
+    width="4" height="0.6" font-size="30" alignment="center" color="#222222"
+    font-color="#88ffcc"></m-label>
+
+  <m-group id="floor" y="0.1" z="0"></m-group>
+
+  <m-cube id="reset" x="4.5" y="0.5" z="2" color="tomato">
+    <m-attr-lerp attr="sx,sy,sz" duration="300" easing="easeOutBack"></m-attr-lerp>
+  </m-cube>
+  <m-label content="reset" x="4.5" y="1.4" z="2" width="1.6" height="0.5"
+    font-size="26" alignment="center" color="#111111" font-color="#ffaaaa"></m-label>
+
+  <script>//<![CDATA[
+    const SIZE = 6;
+    const TILE = 1.0;
+    const GAP = 0.08;
+    const PALETTE = ["#ff5470", "#ffd166", "#06d6a0", "#118ab2", "#a78bfa", "#f97316"];
+    const OFF = "#20242c";
+
+    const floor = document.getElementById("floor");
+    const counter = document.getElementById("counter");
+    const state = {}; // id -> palette index or -1 when off
+    let lit = 0;
+
+    function updateCounter() {
+      counter.setAttribute("content", lit + (lit === 1 ? " tile lit" : " tiles lit"));
+    }
+
+    for (let gx = 0; gx < SIZE; gx++) {
+      for (let gz = 0; gz < SIZE; gz++) {
+        const tile = document.createElement("m-cube");
+        const id = "t" + gx + "-" + gz;
+        tile.setAttribute("id", id);
+        tile.setAttribute("width", TILE - GAP);
+        tile.setAttribute("depth", TILE - GAP);
+        tile.setAttribute("height", 0.2);
+        tile.setAttribute("x", (gx - (SIZE - 1) / 2) * TILE);
+        tile.setAttribute("z", (gz - (SIZE - 1) / 2) * TILE);
+        tile.setAttribute("color", OFF);
+        state[id] = -1;
+
+        const lerp = document.createElement("m-attr-lerp");
+        lerp.setAttribute("attr", "y");
+        lerp.setAttribute("duration", "250");
+        lerp.setAttribute("easing", "easeOutCubic");
+        tile.appendChild(lerp);
+
+        tile.addEventListener("click", (e) => {
+          const next = state[id] + 1;
+          if (next >= PALETTE.length) {
+            state[id] = -1;
+            tile.setAttribute("color", OFF);
+            tile.setAttribute("y", 0);
+            lit--;
+          } else {
+            if (state[id] === -1) lit++;
+            state[id] = next;
+            tile.setAttribute("color", PALETTE[next]);
+            tile.setAttribute("y", 0.15);
+          }
+          updateCounter();
+        });
+
+        floor.appendChild(tile);
+      }
+    }
+
+    document.getElementById("reset").addEventListener("click", (e) => {
+      const btn = e.currentTarget;
+      btn.setAttribute("sx", 1.3); btn.setAttribute("sy", 1.3); btn.setAttribute("sz", 1.3);
+      setTimeout(() => {
+        btn.setAttribute("sx", 1); btn.setAttribute("sy", 1); btn.setAttribute("sz", 1);
+      }, 150);
+      for (const id in state) {
+        if (state[id] !== -1) {
+          state[id] = -1;
+          const t = document.getElementById(id);
+          t.setAttribute("color", OFF);
+          t.setAttribute("y", 0);
+        }
+      }
+      lit = 0;
+      updateCounter();
+    });
+
+    updateCounter();
+  //]]></script>
+</body>

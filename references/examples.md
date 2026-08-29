@@ -15,6 +15,7 @@ Table of contents
 7. Collision platform and user counter (from the collisions guide)
 8. Position probe (user presence markers)
 9. Prompt, interaction, lerp, frame (small element demos)
+10. Bundled skill examples: parkour and disco floor (assets/templates/)
 
 ## 1. Game of Life
 
@@ -625,3 +626,44 @@ Public test assets that the official examples use and that are safe to reference
 `https://public.mml.io/duck.glb`, `https://public.mml.io/dice.glb`,
 `https://public.mml.io/damaged-helmet.glb`, `https://public.mml.io/charge.mp4`,
 `https://public.mml.io/rgb-cubes.html`.
+
+## 10. Bundled skill examples (assets/templates/)
+
+Two complete, validated games written with this skill. Scaffold either with
+`scripts/new-mml-project.sh <dir> --example parkour` (or `--example disco-floor`), or copy them
+out of `assets/templates/` directly.
+
+### Parkour (`parkour.html`) - a full timed game
+
+A 10-platform climbing course: start pad, 8 checkpoints that must be hit in order, finish pad.
+Time-based scoring against a par time, per-player personal bests, and a floating top-5
+leaderboard. Demonstrates, in one document:
+
+- **Per-player state**: `runs` and `best` are `Map`s keyed by `event.detail.connectionId`.
+  Multiple users race simultaneously without interfering.
+- **Dual input**: every platform listens for BOTH `collisionstart` (avatar worlds; requires
+  `collision-interval`) and `click` (fly-camera viewers have no avatar). Same handler.
+- **Document-time scoring**: run duration is `document.timeline.currentTime` deltas - the one
+  clock all clients agree on.
+- **Ordered progression**: checkpoints are validated against a precomputed `cpOrder` array;
+  touching the finish with checkpoints missing is rejected (anti-cheat).
+- **Data-driven layout**: the whole course is a `COURSE` array of `{x,y,z,w,d,kind}` at the top
+  of the script. Platform spacing follows the avatar movement envelope in
+  `references/avatar-worlds.md` (~0.6m rises, ~2-3m gaps) so it is jumpable by a real avatar.
+- **Cleanup**: a `window` `disconnected` handler drops mid-run state for leavers.
+- **Cheap ticking**: one 200ms interval updates a single HUD label, and only while someone is
+  mid-run.
+
+### Disco floor (`disco-floor.html`) - dynamic DOM + lerp polish
+
+A 6x6 grid of clickable tiles; each click cycles a tile through a 6-color palette, a counter
+label tracks lit tiles, and a reset button clears the board with a springy scale pulse.
+Demonstrates:
+
+- **Grid built from script**: tiles are `document.createElement("m-cube")` with ids derived
+  from coordinates (the Game of Life shape) and state in a plain object, DOM as projection.
+- **`m-attr-lerp` for free polish**: each tile carries a lerp on `y` so `setAttribute("y", ...)`
+  glides; the reset button lerps `sx,sy,sz` with `easeOutBack` for a press animation. Zero
+  per-frame messages.
+- **Shared state**: every connected user sees the same floor; a click in one tab lights the
+  tile in all tabs.

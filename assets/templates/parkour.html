@@ -15,13 +15,15 @@
       font-size="38" alignment="center" color="#0b0e14" font-color="#a78bfa"></m-label>
   </m-group>
 
+  <!-- Ground -->
   <m-cube id="ground" width="40" depth="40" height="0.2" y="-0.1" color="#1a1e28"></m-cube>
 
+  <!-- Course platforms get created from script -->
   <m-group id="course"></m-group>
 
   <script>//<![CDATA[
-    // Course layout tuned for AVATAR physics (jump ~1-1.5m up, ~2-3m across):
-    // rises ~0.6m, gaps under 2m. Checkpoints must be hit in order.
+    // ---------- Course layout (edit freely) ----------
+    // Each platform: position + size. Checkpoints must be hit in order.
     const COURSE = [
       { x: 0,    y: 0.2, z: 6,    w: 3,   d: 3,   kind: "start" },
       { x: 2.2,  y: 0.7, z: 4,    w: 1.8, d: 1.8, kind: "cp" },
@@ -43,8 +45,10 @@
     const hudBoard = document.getElementById("hud-board");
 
     const nCps = COURSE.filter(p => p.kind === "cp").length;
-    const runs = new Map();   // connectionId -> { startTime, nextCp }
-    const best = new Map();   // connectionId -> ms
+    // runs: connectionId -> { startTime, nextCp }
+    const runs = new Map();
+    // best: connectionId -> ms
+    const best = new Map();
 
     function now() { return document.timeline.currentTime; }
     function fmt(ms) { return (ms / 1000).toFixed(1) + "s"; }
@@ -60,13 +64,6 @@
       COURSE.forEach((p, i) => {
         if (p.kind === "cp") document.getElementById("plat-" + i).setAttribute("color", CP_COLOR);
       });
-    }
-
-    const cpOrder = COURSE.map((p, i) => p.kind === "cp" ? i : -1).filter(i => i !== -1);
-    const firstCpIndex = cpOrder[0];
-    function nextCpIndex(i) {
-      const k = cpOrder.indexOf(i);
-      return k + 1 < cpOrder.length ? cpOrder[k + 1] : -1; // -1 = all checkpoints done
     }
 
     function touch(index, connId) {
@@ -85,14 +82,16 @@
           document.getElementById("plat-" + index).setAttribute("color", CP_HIT);
           run.nextCp = nextCpIndex(index);
           const done = cpOrder.indexOf(index) + 1;
-          hudStatus.setAttribute("content", "runner-" + connId + "  checkpoint " + done + "/" + nCps);
+          hudStatus.setAttribute("content",
+            "runner-" + connId + "  checkpoint " + done + "/" + nCps);
           hudTimer.setAttribute("content", fmt(now() - run.startTime));
         }
         return;
       }
       if (p.kind === "finish") {
         if (run.nextCp !== -1) {
-          hudStatus.setAttribute("content", "runner-" + connId + " missed a checkpoint! Keep going");
+          hudStatus.setAttribute("content",
+            "runner-" + connId + " missed a checkpoint! Keep going");
           return;
         }
         const ms = now() - run.startTime;
@@ -100,7 +99,7 @@
         const prev = best.get(connId);
         if (prev === undefined || ms < prev) best.set(connId, ms);
         hudStatus.setAttribute("content",
-          "runner-" + connId + " FINISHED in " + fmt(ms) + " \u2014 " + score(ms) + " pts" +
+          "runner-" + connId + " FINISHED in " + fmt(ms) + " — " + score(ms) + " pts" +
           (prev !== undefined && ms < prev ? " (new PB!)" : ""));
         hudTimer.setAttribute("content", fmt(ms));
         renderBoard();
@@ -108,6 +107,15 @@
       }
     }
 
+    // Ordered checkpoint bookkeeping
+    const cpOrder = COURSE.map((p, i) => p.kind === "cp" ? i : -1).filter(i => i !== -1);
+    const firstCpIndex = cpOrder[0];
+    function nextCpIndex(i) {
+      const k = cpOrder.indexOf(i);
+      return k + 1 < cpOrder.length ? cpOrder[k + 1] : -1; // -1 = all done
+    }
+
+    // Build platforms
     COURSE.forEach((p, i) => {
       const cube = document.createElement("m-cube");
       cube.setAttribute("id", "plat-" + i);
@@ -116,11 +124,9 @@
       cube.setAttribute("height", 0.3);
       cube.setAttribute("color",
         p.kind === "start" ? START_COLOR : p.kind === "finish" ? FINISH_COLOR : CP_COLOR);
-      // Dual trigger: collisionstart works in avatar worlds (3d-web-experience);
-      // click is the fallback for the fly-camera CLI preview which has no avatar.
       cube.setAttribute("collision-interval", "150");
       cube.addEventListener("collisionstart", (e) => touch(i, e.detail.connectionId));
-      cube.addEventListener("click", (e) => touch(i, e.detail.connectionId));
+      cube.addEventListener("click", (e) => touch(i, e.detail.connectionId)); // fly-camera fallback
       course.appendChild(cube);
 
       if (p.kind !== "cp") {
@@ -135,13 +141,14 @@
       }
     });
 
-    // Single shared HUD timer: one label updated at 200ms, not per-frame (network cost).
+    // Live timer tick for whoever is mid-run (cheap: one label, 200ms)
     setInterval(() => {
       if (runs.size === 0) return;
       const [connId, run] = runs.entries().next().value;
       hudTimer.setAttribute("content", fmt(now() - run.startTime));
     }, 200);
 
+    // Clean up runners who disconnect mid-run
     window.addEventListener("disconnected", (e) => {
       runs.delete(e.detail.connectionId);
     });
