@@ -1,0 +1,10 @@
+# Upstream sources this skill was built against. Updated by scripts/check-upstream.sh --accept
+mml_repo=https://github.com/mml-io/mml
+mml_commit=ed4fbf3c4c7c878594a9406d9e05b3cd3ace806d
+mml_version=0.26.1
+cli_npm_version=0.26.1
+sha_mml_xsd=46307ef7f746a912
+sha_events_dts=b5954a756c9f29d2
+sha_cli_readme=84187ed806460f19
+starter_repo=https://github.com/mml-io/mml-starter-project
+starter_commit=503371834bc1ad14173f6ee59524dd3538edafff

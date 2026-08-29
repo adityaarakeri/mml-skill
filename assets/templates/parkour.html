@@ -1,0 +1,149 @@
+<body>
+  <m-light type="point" intensity="600" x="8" y="14" z="10"></m-light>
+  <m-light type="point" intensity="300" color="#aaccff" x="-8" y="10" z="-10"></m-light>
+
+  <!-- HUD -->
+  <m-group id="hud" x="0" y="7" z="-14">
+    <m-label id="hud-title" content="PARKOUR RUSH" width="10" height="1.2" y="2.4"
+      font-size="90" alignment="center" color="#0b0e14" font-color="#ffd166"></m-label>
+    <m-label id="hud-status" content="Touch or click the GREEN pad to start"
+      width="10" height="0.8" y="1.3" font-size="42" alignment="center"
+      color="#0b0e14" font-color="#ffffff"></m-label>
+    <m-label id="hud-timer" content="--.-s" width="10" height="1.0" y="0.3"
+      font-size="70" alignment="center" color="#0b0e14" font-color="#06d6a0"></m-label>
+    <m-label id="hud-board" content="Best times:\n(no runs yet)" width="10" height="2.6" y="-1.7"
+      font-size="38" alignment="center" color="#0b0e14" font-color="#a78bfa"></m-label>
+  </m-group>
+
+  <m-cube id="ground" width="40" depth="40" height="0.2" y="-0.1" color="#1a1e28"></m-cube>
+
+  <m-group id="course"></m-group>
+
+  <script>//<![CDATA[
+    // Course layout tuned for AVATAR physics (jump ~1-1.5m up, ~2-3m across):
+    // rises ~0.6m, gaps under 2m. Checkpoints must be hit in order.
+    const COURSE = [
+      { x: 0,    y: 0.2, z: 6,    w: 3,   d: 3,   kind: "start" },
+      { x: 2.2,  y: 0.7, z: 4,    w: 1.8, d: 1.8, kind: "cp" },
+      { x: 4.2,  y: 1.3, z: 1.8,  w: 1.6, d: 1.6, kind: "cp" },
+      { x: 3.4,  y: 1.9, z: -0.8, w: 1.5, d: 1.5, kind: "cp" },
+      { x: 1.2,  y: 2.5, z: -2.4, w: 1.4, d: 1.4, kind: "cp" },
+      { x: -1.4, y: 3.1, z: -1.8, w: 1.4, d: 1.4, kind: "cp" },
+      { x: -3.2, y: 3.7, z: 0.4,  w: 1.3, d: 1.3, kind: "cp" },
+      { x: -2.6, y: 4.3, z: 3.0,  w: 1.3, d: 1.3, kind: "cp" },
+      { x: -0.4, y: 4.9, z: 4.6,  w: 1.2, d: 1.2, kind: "cp" },
+      { x: 1.8,  y: 5.5, z: 3.2,  w: 2.4, d: 2.4, kind: "finish" },
+    ];
+    const START_COLOR = "#06d6a0", CP_COLOR = "#4361ee", CP_HIT = "#ffd166",
+          FINISH_COLOR = "#ff5470", PAR_MS = 30000;
+
+    const course = document.getElementById("course");
+    const hudStatus = document.getElementById("hud-status");
+    const hudTimer = document.getElementById("hud-timer");
+    const hudBoard = document.getElementById("hud-board");
+
+    const nCps = COURSE.filter(p => p.kind === "cp").length;
+    const runs = new Map();   // connectionId -> { startTime, nextCp }
+    const best = new Map();   // connectionId -> ms
+
+    function now() { return document.timeline.currentTime; }
+    function fmt(ms) { return (ms / 1000).toFixed(1) + "s"; }
+    function score(ms) { return Math.max(100, Math.round(10000 - (ms - PAR_MS) / 10)); }
+
+    function renderBoard() {
+      const rows = [...best.entries()].sort((a, b) => a[1] - b[1]).slice(0, 5)
+        .map(([id, ms], i) => (i + 1) + ". runner-" + id + "  " + fmt(ms) + "  (" + score(ms) + " pts)");
+      hudBoard.setAttribute("content", "Best times:\n" + (rows.length ? rows.join("\n") : "(no runs yet)"));
+    }
+
+    function resetCpColors() {
+      COURSE.forEach((p, i) => {
+        if (p.kind === "cp") document.getElementById("plat-" + i).setAttribute("color", CP_COLOR);
+      });
+    }
+
+    const cpOrder = COURSE.map((p, i) => p.kind === "cp" ? i : -1).filter(i => i !== -1);
+    const firstCpIndex = cpOrder[0];
+    function nextCpIndex(i) {
+      const k = cpOrder.indexOf(i);
+      return k + 1 < cpOrder.length ? cpOrder[k + 1] : -1; // -1 = all checkpoints done
+    }
+
+    function touch(index, connId) {
+      const p = COURSE[index];
+      if (p.kind === "start") {
+        runs.set(connId, { startTime: now(), nextCp: firstCpIndex });
+        resetCpColors();
+        hudStatus.setAttribute("content", "runner-" + connId + " GO! Hit the blue checkpoints in order");
+        hudTimer.setAttribute("content", "0.0s");
+        return;
+      }
+      const run = runs.get(connId);
+      if (!run) return; // has not started
+      if (p.kind === "cp") {
+        if (index === run.nextCp) {
+          document.getElementById("plat-" + index).setAttribute("color", CP_HIT);
+          run.nextCp = nextCpIndex(index);
+          const done = cpOrder.indexOf(index) + 1;
+          hudStatus.setAttribute("content", "runner-" + connId + "  checkpoint " + done + "/" + nCps);
+          hudTimer.setAttribute("content", fmt(now() - run.startTime));
+        }
+        return;
+      }
+      if (p.kind === "finish") {
+        if (run.nextCp !== -1) {
+          hudStatus.setAttribute("content", "runner-" + connId + " missed a checkpoint! Keep going");
+          return;
+        }
+        const ms = now() - run.startTime;
+        runs.delete(connId);
+        const prev = best.get(connId);
+        if (prev === undefined || ms < prev) best.set(connId, ms);
+        hudStatus.setAttribute("content",
+          "runner-" + connId + " FINISHED in " + fmt(ms) + " \u2014 " + score(ms) + " pts" +
+          (prev !== undefined && ms < prev ? " (new PB!)" : ""));
+        hudTimer.setAttribute("content", fmt(ms));
+        renderBoard();
+        resetCpColors();
+      }
+    }
+
+    COURSE.forEach((p, i) => {
+      const cube = document.createElement("m-cube");
+      cube.setAttribute("id", "plat-" + i);
+      cube.setAttribute("x", p.x); cube.setAttribute("y", p.y); cube.setAttribute("z", p.z);
+      cube.setAttribute("width", p.w); cube.setAttribute("depth", p.d);
+      cube.setAttribute("height", 0.3);
+      cube.setAttribute("color",
+        p.kind === "start" ? START_COLOR : p.kind === "finish" ? FINISH_COLOR : CP_COLOR);
+      // Dual trigger: collisionstart works in avatar worlds (3d-web-experience);
+      // click is the fallback for the fly-camera CLI preview which has no avatar.
+      cube.setAttribute("collision-interval", "150");
+      cube.addEventListener("collisionstart", (e) => touch(i, e.detail.connectionId));
+      cube.addEventListener("click", (e) => touch(i, e.detail.connectionId));
+      course.appendChild(cube);
+
+      if (p.kind !== "cp") {
+        const lbl = document.createElement("m-label");
+        lbl.setAttribute("content", p.kind.toUpperCase());
+        lbl.setAttribute("x", p.x); lbl.setAttribute("y", p.y + 0.8); lbl.setAttribute("z", p.z);
+        lbl.setAttribute("width", 2); lbl.setAttribute("height", 0.5);
+        lbl.setAttribute("font-size", 40); lbl.setAttribute("alignment", "center");
+        lbl.setAttribute("color", "#0b0e14");
+        lbl.setAttribute("font-color", p.kind === "start" ? START_COLOR : FINISH_COLOR);
+        course.appendChild(lbl);
+      }
+    });
+
+    // Single shared HUD timer: one label updated at 200ms, not per-frame (network cost).
+    setInterval(() => {
+      if (runs.size === 0) return;
+      const [connId, run] = runs.entries().next().value;
+      hudTimer.setAttribute("content", fmt(now() - run.startTime));
+    }, 200);
+
+    window.addEventListener("disconnected", (e) => {
+      runs.delete(e.detail.connectionId);
+    });
+  //]]></script>
+</body>

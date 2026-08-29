@@ -1,0 +1,19 @@
+<!-- Starter MML document. Delete what you do not need. -->
+<body>
+<m-light type="point" intensity="400" x="6" y="12" z="10"></m-light>
+
+<m-cube id="cube" y="0.5" color="tomato"></m-cube>
+<m-label id="label" y="2" width="4" height="0.6" alignment="center" content="Click the cube"></m-label>
+
+<script>//<![CDATA[
+  const cube = document.getElementById("cube");
+  const label = document.getElementById("label");
+  let clicks = 0;
+
+  cube.addEventListener("click", (e) => {
+    clicks++;
+    cube.setAttribute("color", clicks % 2 ? "seagreen" : "tomato");
+    label.setAttribute("content", `Clicks: ${clicks} (last from connection ${e.detail.connectionId})`);
+  });
+//]]></script>
+</body>

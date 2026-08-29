@@ -1,0 +1,81 @@
+<!--
+  Conway's Game of Life in MML.
+  Adapted from https://mml.io/examples?example=Game%20of%20Life
+  The <script> runs once on the server. Every connected user sees the same grid.
+-->
+<body>
+<m-light type="point" intensity="400" x="6" y="12" z="10"></m-light>
+<m-group id="grid"></m-group>
+
+<script>//<![CDATA[
+  // Knobs
+  const worldSize = 20;      // cells per side
+  const cellSize = 0.5;      // meters per cell
+  const tickMs = 200;        // how often a generation is computed
+  const initialDensity = 0.25;
+  const aliveColor = "skyblue";
+
+  const grid = document.getElementById("grid");
+  let world = [];
+
+  for (let x = 0; x < worldSize; x++) {
+    world[x] = [];
+    for (let y = 0; y < worldSize; y++) {
+      world[x][y] = Math.random() < initialDensity ? 1 : 0;
+      if (world[x][y]) createCube(x, y);
+    }
+  }
+
+  function createCube(x, y) {
+    const cube = document.createElement("m-cube");
+    cube.setAttribute("x", (x - worldSize / 2) * cellSize);
+    cube.setAttribute("y", y * cellSize + 1);
+    cube.setAttribute("z", 0);
+    cube.setAttribute("width", cellSize);
+    cube.setAttribute("height", cellSize);
+    cube.setAttribute("depth", cellSize);
+    cube.setAttribute("color", aliveColor);
+    cube.setAttribute("id", x + ":" + y);
+    grid.appendChild(cube);
+  }
+
+  function countNeighbours(x, y) {
+    let count = 0;
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        if (dx === 0 && dy === 0) continue;
+        const nx = (x + dx + worldSize) % worldSize;
+        const ny = (y + dy + worldSize) % worldSize;
+        count += world[nx][ny];
+      }
+    }
+    return count;
+  }
+
+  function update() {
+    const newWorld = [];
+    for (let x = 0; x < worldSize; x++) {
+      newWorld[x] = [];
+      for (let y = 0; y < worldSize; y++) {
+        const nn = countNeighbours(x, y);
+        const alive = world[x][y] === 1;
+
+        if (alive && (nn < 2 || nn > 3)) {
+          newWorld[x][y] = 0;
+        } else if (!alive && nn === 3) {
+          newWorld[x][y] = 1;
+        } else {
+          newWorld[x][y] = world[x][y];
+        }
+
+        // Only touch the DOM for cells that changed.
+        if (newWorld[x][y] && !alive) createCube(x, y);
+        if (!newWorld[x][y] && alive) document.getElementById(x + ":" + y).remove();
+      }
+    }
+    world = newWorld;
+  }
+
+  setInterval(update, tickMs);
+//]]></script>
+</body>

@@ -1,0 +1,29 @@
+# Weekly drift check against upstream MML. Opens an issue when something changed.
+name: check-mml-upstream
+on:
+  schedule:
+    - cron: "0 9 * * 1"   # Mondays 09:00 UTC
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Run drift check
+        id: drift
+        run: |
+          set +e
+          scripts/check-upstream.sh | tee drift.txt
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+      - name: Open issue on drift
+        if: steps.drift.outputs.code != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = '```\n' + fs.readFileSync('drift.txt','utf8').slice(0, 60000) + '\n```';
+            await github.rest.issues.create({ ...context.repo,
+              title: 'MML upstream drift detected', body,
+              labels: ['upstream-drift'] });
